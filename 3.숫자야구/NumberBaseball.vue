@@ -2,7 +2,7 @@
   <div>
     <div>{{result}}</div>
     <form @submit.prevent="onSubmitForm">
-      <input type="number" ref="answer" minlength="4" maxlength="4" v-model="value" />
+      <input type="number" ref="answer" v-bind:minlength="4" v-bind:maxlength="4" v-model="value" />
       <button>입력</button>
     </form>
     <div>시도 {{tries.length}}</div>
@@ -16,24 +16,67 @@
 </template>
 
 <script>
+
+  const getNumbers =  () => {
+    const candidates = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const array = [];
+    for (let i = 0; i < 4; i+=1) {
+      const chosen = candidates.splice(Math.floor(Math.random() * (9 - i)), 1)[0];
+      array.push(chosen);
+    }
+    return array;
+  }
+
   export default {
     data() {
       return {
-        answer: geNumbers(),
-        tries: [],
-        value: '',
-        result: '',
+        answer: getNumbers(), // ex) [1, 5, 3, 4]
+        tries: [], // 시도 수
+        value: '', // 입력
+        result: '', // 결과
       }
     },
     methods: {
       onSubmitForm() { 
-        this.tries.push({
-          try: this.value,
-          result:'홈런'
+        if(this.value === this.answer.join('')) { // 정답 맞췄으면
+          this.tries.push({
+            try: this.value,
+            result:'홈런'
           });
-        this.value = '';
-        this.$refs.answer.focus();
+          this.result = '홈럼';
+          alert('게임을 다시 실행합니다.');
+          this.value = '';
+          this.tries = [];
+          this.answer = getNumbers();
+          this.$refs.answer.focus();
+        } else { // 정답 틀렸을 때
 
+          if(this.tries.length >= 9) { // 10번째 시도
+            this.result = `10번 넘게 틀려서 실패! 답은 ${this.answer.join(',')}였습니다!`;
+            alert('게임을 다시 시작합니다.');
+            this.value = '';
+            this.answer = getNumbers();
+            this.tries = [];
+            this.$refs.answer.focus();
+          }
+          let strike = 0;
+          let ball = 0;
+          const answerArray = this.value.split('').map(v =>parseInt(v));
+          // 화면에 보여지면 데이터 계산식 화면과 관련없는 애들은 그냥 변수
+          for(let i=0; i<4; i+=1) {
+            if(answerArray[i] == this.answer[i]) { // 숫자 자릿수 모두 정답
+              strike++;
+            } else if (this.answer.includes(answerArray[i])) { // 숫자만 정답
+              ball++;
+            }
+          }
+          this.tries.push({
+            try: this.value,
+            result: `${strike} 스트라이크, ${ball} 볼입니다.`,
+          });
+          this.value = '';
+          this.$refs.answer.focus();
+        }
       }
     }
   };
